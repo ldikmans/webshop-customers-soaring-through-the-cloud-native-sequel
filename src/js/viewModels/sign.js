@@ -1,11 +1,12 @@
 define(
-    ['ojs/ojcore', 'knockout', 'jquery', 'ojs/ojinputtext', 'ojs/ojbutton'
+    ['ojs/ojcore', 'knockout', 'jquery', 'appController', 'ojs/ojinputtext', 'ojs/ojbutton'
     ],
-    function (oj, ko, $) {
+    function (oj, ko, $, app) {
         'use strict';
         function SignModel() {
             var self = this;
-            var customersMSAPIEndpoint = "http://oc-129-156-113-240.compute.oraclecloud.com:8011/customer";
+      
+           var customersMSAPIEndpoint = "http://129.213.126.223:8011/customer";
             //var customersMSAPIEndpoint = "http://localhost:8080/customer";
             //var apiKey = "73f1c312-64e1-4069-92d8-0179ac056e90"
 
@@ -22,7 +23,7 @@ define(
                 };
 
                     
-            return $.ajax({
+                return $.ajax({
                     type: 'POST',
                     url: customersMSAPIEndpoint + "/signin",
                     data: JSON.stringify(user),
@@ -44,8 +45,9 @@ define(
                 }).done(function (response) {
                         var rootViewModel = ko.dataFor(document.getElementById('globalBody'));
                         rootViewModel.doLogin(response);
-                        window.sessionStorage.userLoggedIn = true;
-                        oj.Router.rootInstance.go('profile');
+                        sessionStorage.setItem('signUp', false);
+                        sessionStorage.setItem('userLoggedIn',true);
+                        app.router.go('profile');
 
                 }).fail(function (textStatus, errorThrown) {
                     console.log(textStatus.responseText);
@@ -56,12 +58,9 @@ define(
             
             
             self.signUpLinkClick = function (event) {
-                var user = {
-                    'username': self.username(),
-                    'password': self.password()
-                };
-               
-                oj.Router.rootInstance.go('profile');
+                console.log('clicked signup');
+                sessionStorage.setItem('signUp', true);
+                app.router.go('profile');
 
             };            
 

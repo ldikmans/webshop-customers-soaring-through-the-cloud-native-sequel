@@ -1,91 +1,64 @@
 define(
-        ['ojs/ojcore', 'knockout', 'dataService', 'jquery', 'ojs/ojinputtext', 'ojs/ojbutton', 'ojs/ojdatetimepicker', 'ojs/ojlabel', 'ojs/ojselectcombobox', 'ojs/ojswitch'
+        ['ojs/ojcore', 'knockout', 'dataService', 'appController', 'jquery', 'ojs/ojinputtext', 'ojs/ojbutton', 'ojs/ojdatetimepicker', 'ojs/ojlabel', 'ojs/ojselectcombobox', 'ojs/ojswitch'
         ],
-        function (oj, ko, data, $) {
+        function (oj, ko, data, app
+                ) {
             'use strict';
 
             function ProfileModel() {
 
                 var self = this;
-
-                self.id = window.sessionStorage.profileId;
-                self.signup = !window.sessionStorage.userLoggedIn;
+                self.serviceURL = 'http://129.213.126.223:8011/customer';
 
 
-                var rootViewModel = ko.dataFor(document.getElementById('globalBody'));
-                var customer = rootViewModel.globalContext.customer || window.sessionStorage.customer || {};
-               
-                
-                //todo use ko.mapping 
-                self.firstName = ko.observable(customer.firstName);
-                self.lastName = ko.observable(customer.lastName);
-                self.title = ko.observable(customer.title);
-                self.email = ko.observable(customer.email);
-                self.dateOfBirth = ko.observable(customer.dateOfBirth);
-                self.password = ko.observable(customer.password);
-                var newsletter = "false";
-                var offers = "false";
-                if (customer.preferences) {
-                    newsletter = customer.preferences.newsLetter;
-                    offers = customer.preferences.offers;
-                }
-                self.newsLetter = ko.observable(newsletter);
-                self.offer = ko.observable(offers);
+                self.firstName = ko.observable();
+                self.lastName = ko.observable();
+                self.title = ko.observable();
+                self.email = ko.observable();
+                self.dateOfBirth = ko.observable();
+                self.password = ko.observable();
 
-                var addressType = "BILLING";
-                var streetName;
-                var streetNumber;
-                var postcode;
-                var city;
-                var country;
+                self.newsLetter = ko.observable();
+                self.offer = ko.observable();
+                self.addressType = ko.observable();
+                self.streetName = ko.observable();
+                self.streetNumber = ko.observable();
+                self.city = ko.observable();
+                self.postcode = ko.observable();
+                self.country = ko.observable();
+                self.paymentType = ko.observable();
+                self.cardNumber = ko.observable();
+                self.expirationDate = ko.observable();
+                self.nameOnCard = ko.observable();
+                let customer = ko.observable();
+                let id = ko.observable();
+                let signup = ko.observable();
+                self.signedin = ko.observable();
 
 
-                if (customer.addresses) {
-                    if (customer.addresses.length > 0) {
-                        addressType = customer.addresses[0].type;
-                        streetName = customer.addresses[0].streetName;
-                        streetNumber = customer.addresses[0].streetNumber;
-                        postcode = customer.addresses[0].postcode;
-                        city = customer.addresses[0].city;
-                        country = customer.addresses[0].country;
-                    } else {
-                        customer.addresses = {};
-
+                self.handleActivated = function (info) {
+                    self.id = sessionStorage.getItem('profileId');
+                    self.signup = sessionStorage.getItem('signUp');
+                    
+                    // we either are in signing up (true), or just signed in (have an id), or landed here by default and should go to sign in
+                    if (self.signup === 'true') {
+                        console.log('signing up');
+                        self.signedin(false);
+                        self.customer = {};
+                        self.customer.addresses = [];
+                        self.customer.paymentDetails = {};
+                        self.customer.preferences = {}; 
+                    } else if(self.id) {
+                        self.signedin(true);
+                        getUserProfile();
+                    } else{
+                        app.router.go('sign');
                     }
-                }
 
-                self.addressType = ko.observable(addressType);
-                self.streetName = ko.observable(streetName);
-                self.streetNumber = ko.observable(streetNumber);
-                self.city = ko.observable(city);
-                self.postcode = ko.observable(postcode);
-                self.country = ko.observable(country);
+                };
 
-
-                //payment details
-                //TODO make it take multiple cards, currently it only shows the first card and you can only update a card, not add it.
-                var paymentType = "CREDIT";
-                var cardNumber = "";
-                var expirationDate = "";
-                var nameOnCard = customer.lastName;
-
-                if (customer.paymentDetails) {
-                    if (customer.paymentDetails.length > 0) {
-                        paymentType = customer.paymentDetails[0].type;
-                        cardNumber = customer.paymentDetails[0].cardNumber;
-                        expirationDate = customer.paymentDetails[0].expirationDate;
-                        nameOnCard = customer.paymentDetails[0].nameOnCard;
-                    }
-                }
-
-                self.paymentType = ko.observable(paymentType);
-                self.cardNumber = ko.observable(cardNumber);
-                self.expirationDate = ko.observable(expirationDate);
-                self.nameOnCard = ko.observable(nameOnCard);
-
-                self.getUserProfile = function () {
+                function getUserProfile() {
                     return new Promise(function (resolve, reject) {
-                        console.log("getting the user profile");
                         data.getUserProfile(self.id).then(function (response) {
                             console.log('response: ' + JSON.stringify(response));
                             processUserProfile(response, resolve, reject);
@@ -93,17 +66,17 @@ define(
                             console.error('exception getting profile');
                             processUserProfile(response, resolve, reject);
                         });
+
                     });
-                };
+                    ;
+                }
+                ;
 
                 function processUserProfile(response, resolve, reject) {
-                    console.log("response in processUserProfile: " + JSON.stringify(response));
-                    //var result = JSON.parse(response);
-                    //
                     var result = response;
                     if (result) {
-                        customer = result;
-                        resolve(mapCustomer(customer));
+                        self.customer = result;
+                        resolve(mapCustomer(self.customer));
                         return;
                     }
 
@@ -113,8 +86,6 @@ define(
                 }
 
                 function mapCustomer(customer) {
-                    console.log("in MapCustomer");
-                    console.log('customer: ' + JSON.stringify(customer));
                     self.firstName(customer.firstName);
                     self.lastName(customer.lastName);
                     self.title(customer.title);
@@ -155,40 +126,8 @@ define(
                 }
                 ;
 
-                var customersMSAPIEndpoint = "http://oc-129-156-113-240.compute.oraclecloud.com:8011/customer";
-                //var customersMSAPIEndpoint = "http://localhost:8080/customer";
-
-
-
-
-
-                if (!self.signup) {
-                    console.log('in !self.signup');
-                    self.getUserProfile();
-                }
-                ;
-
-                if (self.signup) {
-                    customer = {};
-                    customer.addresses = [];
-                    customer.paymentDetails = {};
-                    customer.preferences = {};
-                }
-
-
-
-                self.signUp = function(event){
-                    window.sessionStorage.customer = {};
-                     customer = {};
-                    customer.addresses = [];
-                    customer.paymentDetails = {};
-                    customer.preferences = {};
-                    
-                };
 
                 self.saveProfile = function (event) {
-
-
                     var updatedCustomer = {
                         "firstName": self.firstName(),
                         "lastName": self.lastName(),
@@ -202,7 +141,7 @@ define(
                         }
                     };
 
-                    if (customer.addresses) {
+                    if (self.streetName()) {
                         var addressBilling = {
                             "type": self.addressType(),
                             "streetName": self.streetName(),
@@ -218,7 +157,7 @@ define(
                         //TODO add delivery address
                     }
 
-                    if (customer.paymentDetails) {
+                    if (self.cardNumber()) {
                         var updatedPaymentDetail = {
                             "type": self.paymentType(),
                             "cardNumber": self.cardNumber(),
@@ -235,11 +174,11 @@ define(
 
 
 
-                    if (customer._id) {
+                    if (self.customer._id) {
                         //update the profile
                         return $.ajax({
                             type: 'PUT',
-                            url: customersMSAPIEndpoint + "/profile/" + customer._id,
+                            url: self.serviceURL + "/profile/" + self.customer._id,
                             data: JSON.stringify(updatedCustomer),
                             contentType: 'application/json; charset=UTF-8',
 
@@ -265,7 +204,7 @@ define(
                     } else {
                         return $.ajax({
                             type: 'POST',
-                            url: customersMSAPIEndpoint + "/profile/",
+                            url: self.serviceURL + "/profile/",
                             data: JSON.stringify(updatedCustomer),
                             contentType: 'application/json; charset=UTF-8',
 
@@ -282,7 +221,9 @@ define(
                         }).done(function (response) {
 
                             console.log(response);
-                            alert('changes saved');
+                            alert(response.message);
+                            sessionStorage.setItem('signUp', false);
+                            app.router.go('sign');
 
                         }).fail(function (textStatus, errorThrown) {
                             console.error(errorThrown);
@@ -290,6 +231,7 @@ define(
 
                         });
                     }
+
                 };
 
             }
