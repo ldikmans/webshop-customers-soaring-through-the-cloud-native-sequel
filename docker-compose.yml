@@ -3,6 +3,6 @@ services:
   customer-ms-ui:
     image: lonneke/customer-ms-ui:latest
     environment:
-        CUSTOMER_MS_ENDPOINT: 'http://129.156.113.125:8080/customer'
+        CUSTOMER_MS_ENDPOINT: 'http://129.213.126.223:8011/customer'
     ports:
       - '7792:80/tcp'
