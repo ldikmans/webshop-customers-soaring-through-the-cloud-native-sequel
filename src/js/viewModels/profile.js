@@ -8,7 +8,7 @@ define(
             function ProfileModel() {
 
                 var self = this;
-                self.serviceURL = 'http://129.213.126.223:8011/customer';
+                self.serviceURL = "    http://130.61.20.66:8011/customer";
 
 
                 self.firstName = ko.observable();
